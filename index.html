@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦕 KACKESAURUS – Triff den Scooter-Boy!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #87CEEB;
+    overflow: hidden;
+    font-family: 'Bangers', cursive;
+    user-select: none;
+  }
+
+  #gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === BACKGROUND === */
+  #sky {
+    position: absolute;
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, #5BB8FF 0%, #A8E0FF 60%, #C8F0A0 60%, #8BC34A 100%);
+  }
+
+  /* Sun */
+  #sun {
+    position: absolute;
+    top: 30px; right: 80px;
+    width: 70px; height: 70px;
+    background: #FFD700;
+    border-radius: 50%;
+    box-shadow: 0 0 30px #FFD700, 0 0 60px rgba(255,215,0,0.5);
+    animation: sunPulse 3s ease-in-out infinite;
+  }
+  @keyframes sunPulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Clouds */
+  .cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.9;
+    animation: cloudMove linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+  #cloud1 { width: 100px; height: 35px; top: 60px; left: -120px; animation-duration: 25s; }
+  #cloud1::before { width: 50px; height: 50px; top: -25px; left: 15px; }
+  #cloud1::after { width: 35px; height: 35px; top: -18px; left: 50px; }
+  #cloud2 { width: 140px; height: 45px; top: 100px; left: -160px; animation-duration: 35s; animation-delay: -12s; }
+  #cloud2::before { width: 70px; height: 70px; top: -35px; left: 20px; }
+  #cloud2::after { width: 50px; height: 50px; top: -25px; left: 70px; }
+  #cloud3 { width: 80px; height: 30px; top: 40px; left: -100px; animation-duration: 20s; animation-delay: -7s; }
+  #cloud3::before { width: 40px; height: 40px; top: -20px; left: 10px; }
+  #cloud3::after { width: 30px; height: 30px; top: -15px; left: 40px; }
+  @keyframes cloudMove {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 200px)); }
+  }
+
+  /* Garden fence */
+  #fence {
+    position: absolute;
+    bottom: 12%;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    gap: 8px;
+    padding: 0 10px;
+    pointer-events: none;
+  }
+  .fencePost {
+    width: 14px;
+    background: #8B5E3C;
+    border-radius: 3px 3px 0 0;
+    position: relative;
+  }
+  .fencePost::before {
+    content: '▲';
+    position: absolute;
+    top: -20px;
+    left: -2px;
+    color: #8B5E3C;
+    font-size: 18px;
+  }
+  .fenceRail {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    background: #A0724A;
+    border-radius: 3px;
+  }
+  .fenceRail:first-child { top: 10px; }
+  .fenceRail:last-child { top: 35px; }
+
+  /* Flowers */
+  .flower {
+    position: absolute;
+    bottom: 12%;
+    font-size: 24px;
+    animation: flowerSway 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes flowerSway {
+    0%,100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
+  /* Ground */
+  #ground {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 12%;
+    background: linear-gradient(180deg, #6BBF3A 0%, #4A8A1A 30%, #8B5E3C 30%, #6B4520 100%);
+    border-top: 4px solid #3A8A0A;
+  }
+
+  /* === SIDEWALK (Scooter path) === */
+  #sidewalk {
+    position: absolute;
+    bottom: 12%;
+    width: 100%;
+    height: 8px;
+    background: #CCC;
+    border-top: 3px solid #AAA;
+    pointer-events: none;
+  }
+
+  /* === SCOOTER BOY === */
+  #scooterBoy {
+    position: absolute;
+    bottom: calc(12% + 8px);
+    width: 80px;
+    height: 90px;
+    transition: left 0.05s linear;
+    cursor: default;
+  }
+
+  #scooterBoy canvas {
+    width: 80px;
+    height: 90px;
+  }
+
+  /* Hit flash */
+  #scooterBoy.hit {
+    animation: hitFlash 0.5s ease-out;
+  }
+  @keyframes hitFlash {
+    0%,100% { filter: none; }
+    30% { filter: brightness(3) saturate(0); }
+    60% { filter: hue-rotate(180deg) brightness(2); }
+  }
+
+  /* Fall animation */
+  #scooterBoy.falling {
+    animation: fallDown 0.6s ease-in forwards;
+  }
+  @keyframes fallDown {
+    0% { transform: translateY(0) rotate(0deg); }
+    40% { transform: translateY(10px) rotate(20deg); }
+    100% { transform: translateY(60px) rotate(90deg); opacity: 0.3; }
+  }
+
+  /* === POOP PROJECTILES === */
+  .poop {
+    position: absolute;
+    font-size: 28px;
+    pointer-events: none;
+    z-index: 20;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.4));
+    transition: none;
+  }
+
+  /* === HUD === */
+  #hud {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(0,0,0,0.6);
+    padding: 10px 25px;
+    border-radius: 40px;
+    border: 3px solid #FFD700;
+    z-index: 50;
+  }
+
+  #hudTitle {
+    font-size: 22px;
+    color: #FFD700;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 #B8860B;
+  }
+
+  #hitCounter {
+    display: flex;
+    gap: 8px;
+  }
+
+  .hitDot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 3px solid #FFD700;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.1);
+    transition: all 0.3s;
+  }
+  .hitDot.filled {
+    background: #8B4513;
+    border-color: #FF6B00;
+    animation: hitDotPop 0.3s ease-out;
+  }
+  @keyframes hitDotPop {
+    0% { transform: scale(0.5); }
+    70% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  #ammoDisplay {
+    font-size: 18px;
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* === THROW CURSOR === */
+  #cursor {
+    position: fixed;
+    font-size: 28px;
+    pointer-events: none;
+    z-index: 100;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+  }
+  #cursor.throwing {
+    animation: throwAnim 0.3s ease-out;
+  }
+  @keyframes throwAnim {
+    0% { transform: translate(-50%,-50%) scale(1) rotate(0deg); }
+    50% { transform: translate(-50%,-80%) scale(1.5) rotate(-30deg); }
+    100% { transform: translate(-50%,-50%) scale(0.8) rotate(10deg); }
+  }
+
+  /* === WIN SCREEN === */
+  #winScreen {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #winScreen.show { display: flex; }
+
+  #kackesaurus {
+    font-size: 120px;
+    animation: kackeFloat 1.5s ease-in-out infinite, kackeAppear 0.5s ease-out;
+    position: relative;
+  }
+  @keyframes kackeFloat {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-15px) scale(1.05); }
+  }
+  @keyframes kackeAppear {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  #kackesaurusEyes {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 25px;
+    font-size: 30px;
+    animation: eyeBlink 3s ease-in-out infinite;
+  }
+  @keyframes eyeBlink {
+    0%,90%,100% { transform: translateX(-50%) scaleY(1); }
+    95% { transform: translateX(-50%) scaleY(0.1); }
+  }
+
+  #kackeName {
+    font-size: clamp(40px, 8vw, 80px);
+    color: #8B4513;
+    text-shadow: 4px 4px 0 #FFD700, 8px 8px 0 rgba(0,0,0,0.3);
+    animation: namePulse 1s ease-in-out infinite, nameAppear 0.5s 0.3s ease-out both;
+    margin-top: 10px;
+  }
+  @keyframes namePulse {
+    0%,100% { transform: scale(1) rotate(-2deg); }
+    50% { transform: scale(1.05) rotate(2deg); }
+  }
+  @keyframes nameAppear {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  #winSubtitle {
+    font-size: 28px;
+    color: #FFD700;
+    margin-top: 15px;
+    animation: nameAppear 0.5s 0.6s ease-out both;
+    font-family: 'Comic Neue', cursive;
+    letter-spacing: 2px;
+  }
+
+  #restartBtn {
+    margin-top: 30px;
+    padding: 15px 40px;
+    font-family: 'Bangers', cursive;
+    font-size: 32px;
+    background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: #3A1A00;
+    border: 4px solid #3A1A00;
+    border-radius: 50px;
+    cursor: pointer;
+    animation: nameAppear 0.5s 0.9s ease-out both;
+    box-shadow: 4px 4px 0 #3A1A00;
+    transition: transform 0.1s, box-shadow 0.1s;
+    letter-spacing: 2px;
+  }
+  #restartBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 4px 7px 0 #3A1A00;
+  }
+  #restartBtn:active {
+    transform: translateY(1px);
+    box-shadow: 2px 2px 0 #3A1A00;
+  }
+
+  /* Confetti */
+  .confetti {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+    pointer-events: none;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Instructions */
+  #instructions {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.5);
+    color: #FFF;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-family: 'Comic Neue', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    z-index: 50;
+  }
+
+  /* Score pop */
+  .scorePop {
+    position: absolute;
+    font-size: 36px;
+    font-family: 'Bangers', cursive;
+    color: #FF4400;
+    text-shadow: 2px 2px 0 #FFD700;
+    pointer-events: none;
+    z-index: 100;
+    animation: scoreFly 1s ease-out forwards;
+  }
+  @keyframes scoreFly {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-80px) scale(1.5); opacity: 0; }
+  }
+
+  /* Miss pop */
+  .missPop {
+    position: absolute;
+    font-size: 22px;
+    font-family: 'Comic Neue', cursive;
+    color: #888;
+    pointer-events: none;
+    z-index: 100;
+    animation: missFly 0.8s ease-out forwards;
+  }
+  @keyframes missFly {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-40px); opacity: 0; }
+  }
+
+  /* Splat effect */
+  .splat {
+    position: absolute;
+    font-size: 40px;
+    pointer-events: none;
+    z-index: 30;
+    animation: splatFade 0.8s ease-out forwards;
+  }
+  @keyframes splatFade {
+    0% { transform: scale(0.5) rotate(-20deg); opacity: 1; }
+    50% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <!-- Background -->
+  <div id="sky"></div>
+  <div id="sun"></div>
+  <div class="cloud" id="cloud1"></div>
+  <div class="cloud" id="cloud2"></div>
+  <div class="cloud" id="cloud3"></div>
+
+  <!-- Flowers -->
+  <div class="flower" style="left:5%">🌻</div>
+  <div class="flower" style="left:15%; animation-delay:0.3s">🌸</div>
+  <div class="flower" style="left:25%; animation-delay:0.7s">🌼</div>
+  <div class="flower" style="left:40%; animation-delay:0.2s">🌺</div>
+  <div class="flower" style="left:55%; animation-delay:0.5s">🌻</div>
+  <div class="flower" style="left:68%; animation-delay:0.8s">🌼</div>
+  <div class="flower" style="left:80%; animation-delay:0.1s">🌸</div>
+  <div class="flower" style="left:90%; animation-delay:0.6s">🌺</div>
+
+  <!-- Fence -->
+  <div id="fence" style="display:flex; flex-wrap:nowrap; overflow:hidden; gap:16px; align-items:flex-end;">
+  </div>
+
+  <!-- Sidewalk -->
+  <div id="sidewalk"></div>
+
+  <!-- Ground -->
+  <div id="ground"></div>
+
+  <!-- Scooter Boy (canvas-drawn) -->
+  <canvas id="scooterBoy" width="100" height="120" style="position:absolute; bottom:calc(12% + 8px);"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="hudTitle">💩 KACKESAURUS</div>
+    <div id="hitCounter">
+      <div class="hitDot" id="dot1"></div>
+      <div class="hitDot" id="dot2"></div>
+      <div class="hitDot" id="dot3"></div>
+    </div>
+    <div id="ammoDisplay">💩 Klick zum Werfen!</div>
+  </div>
+
+  <!-- Instructions -->
+  <div id="instructions">🖱️ Klicke irgendwo, um Hundehaufen zu werfen – Triff den Scooter-Boy 3×!</div>
+
+  <!-- Custom cursor -->
+  <div id="cursor">💩</div>
+
+  <!-- Win Screen -->
+  <div id="winScreen">
+    <div style="position:relative; text-align:center;">
+      <div id="kackesaurus">💩</div>
+      <div id="kackesaurusEyes">👀</div>
+    </div>
+    <div id="kackeName">ICH BIN JETZT<br>KACKESAURUS!</div>
+    <div id="winSubtitle">🦕 Du hast gewonnen! 🦕</div>
+    <button id="restartBtn" onclick="restartGame()">🔄 NOCHMAL!</button>
+  </div>
+</div>
+
+<script>
+// === GAME STATE ===
+let hits = 0;
+let gameRunning = true;
+let boyX = 0;
+let boyDir = 1; // 1=right, -1=left
+let boySpeed = 2.5;
+let boyY = 0; // base Y (bottom %)
+let scooterPhase = 0; // for up/down movement
+let isFalling = false;
+let fallTimer = 0;
+let wheelAngle = 0;
+let legPhase = 0;
+
+const canvas = document.getElementById('scooterBoy');
+const ctx = canvas.getContext('2d');
+const gameContainer = document.getElementById('gameContainer');
+const winScreen = document.getElementById('winScreen');
+const cursorEl = document.getElementById('cursor');
+
+// Fence generation
+(function buildFence() {
+  const fence = document.getElementById('fence');
+  fence.innerHTML = '';
+  const w = window.innerWidth;
+  const count = Math.floor(w / 22);
+  const rail1 = document.createElement('div');
+  rail1.className = 'fenceRail';
+  rail1.style.top = '10px';
+  const rail2 = document.createElement('div');
+  rail2.className = 'fenceRail';
+  rail2.style.top = '38px';
+  fence.appendChild(rail1);
+  fence.appendChild(rail2);
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'fencePost';
+    p.style.width = '12px';
+    p.style.height = '55px';
+    p.style.background = '#8B5E3C';
+    p.style.borderRadius = '3px 3px 0 0';
+    p.style.position = 'relative';
+    p.style.flexShrink = '0';
+    fence.appendChild(p);
+  }
+})();
+
+// Custom cursor
+document.addEventListener('mousemove', (e) => {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top = e.clientY + 'px';
+});
+document.body.style.cursor = 'none';
+
+// === DRAW SCOOTER BOY ===
+function drawBoy(x, dir, phase, fallAnim) {
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  // Flip based on direction
+  if (dir < 0) {
+    ctx.translate(W, 0);
+    ctx.scale(-1, 1);
+  }
+
+  // Fall animation
+  if (isFalling && fallTimer < 30) {
+    ctx.translate(W/2, H/2);
+    ctx.rotate((fallTimer / 30) * Math.PI * 0.6);
+    ctx.translate(-W/2, -H/2);
+    ctx.globalAlpha = 1 - fallTimer/40;
+  }
+
+  // === SCOOTER ===
+  // Deck
+  ctx.fillStyle = '#E63946';
+  ctx.beginPath();
+  ctx.roundRect(12, 85, 70, 8, 4);
+  ctx.fill();
+  ctx.strokeStyle = '#9B2226';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Stem
+  ctx.fillStyle = '#666';
+  ctx.fillRect(60, 60, 6, 30);
+
+  // Handlebar
+  ctx.fillStyle = '#444';
+  ctx.fillRect(48, 58, 30, 6);
+  ctx.beginPath();
+  ctx.arc(48, 61, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#222';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(78, 61, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  // Wheels with rotation
+  function drawWheel(cx, cy, r, rot) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot);
+    // Tire
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI*2);
+    ctx.fillStyle = '#222';
+    ctx.fill();
+    // Hub
+    ctx.beginPath();
+    ctx.arc(0, 0, r*0.4, 0, Math.PI*2);
+    ctx.fillStyle = '#999';
+    ctx.fill();
+    // Spokes
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 1.5;
+    for (let i=0; i<4; i++) {
+      const a = (i/4)*Math.PI*2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a)*r*0.9, Math.sin(a)*r*0.9);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  drawWheel(26, 93, 10, wheelAngle);
+  drawWheel(72, 93, 10, wheelAngle);
+
+  // === BOY ===
+  const bobY = Math.sin(phase) * 2; // slight bob
+
+  // Body (torso)
+  ctx.fillStyle = '#2E86AB'; // blue shirt
+  ctx.beginPath();
+  ctx.roundRect(38, 45+bobY, 22, 22, 4);
+  ctx.fill();
+
+  // Stripe on shirt
+  ctx.fillStyle = '#FFF';
+  ctx.fillRect(38, 52+bobY, 22, 3);
+
+  // Head
+  ctx.fillStyle = '#FDBCB4'; // skin
+  ctx.beginPath();
+  ctx.arc(49, 32+bobY, 14, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#D4956A';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Hair (spiky)
+  ctx.fillStyle = '#4A2800';
+  ctx.beginPath();
+  ctx.moveTo(36, 30+bobY);
+  ctx.lineTo(38, 18+bobY);
+  ctx.lineTo(41, 25+bobY);
+  ctx.lineTo(44, 16+bobY);
+  ctx.lineTo(47, 24+bobY);
+  ctx.lineTo(50, 15+bobY);
+  ctx.lineTo(53, 23+bobY);
+  ctx.lineTo(56, 19+bobY);
+  ctx.lineTo(62, 27+bobY);
+  ctx.lineTo(58, 31+bobY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.arc(44, 32+bobY, 3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(54, 32+bobY, 3, 0, Math.PI*2);
+  ctx.fill();
+  // Eye shine
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.arc(45, 31+bobY, 1, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(55, 31+bobY, 1, 0, Math.PI*2);
+  ctx.fill();
+
+  // Smile
+  ctx.strokeStyle = '#B5501A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(49, 36+bobY, 5, 0.2, Math.PI-0.2);
+  ctx.stroke();
+
+  // Ears
+  ctx.fillStyle = '#FDBCB4';
+  ctx.beginPath();
+  ctx.ellipse(35, 32+bobY, 4, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(63, 32+bobY, 4, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Arms – leaning on handlebar
+  ctx.strokeStyle = '#FDBCB4';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  // Left arm
+  ctx.beginPath();
+  ctx.moveTo(38, 52+bobY);
+  ctx.quadraticCurveTo(30, 58+bobY, 52, 63+bobY);
+  ctx.stroke();
+  // Right arm
+  ctx.beginPath();
+  ctx.moveTo(60, 52+bobY);
+  ctx.quadraticCurveTo(72, 55+bobY, 68, 63+bobY);
+  ctx.stroke();
+
+  // Hands
+  ctx.fillStyle = '#FDBCB4';
+  ctx.beginPath();
+  ctx.arc(52, 63+bobY, 4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(68, 63+bobY, 4, 0, Math.PI*2);
+  ctx.fill();
+
+  // Pants
+  ctx.fillStyle = '#1D3461';
+  ctx.beginPath();
+  ctx.roundRect(38, 66+bobY, 22, 14, 3);
+  ctx.fill();
+
+  // Legs (with animation)
+  const legSwing = Math.sin(phase * 2) * 5;
+  ctx.strokeStyle = '#1D3461';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(42, 80+bobY);
+  ctx.lineTo(40 + legSwing, 93);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(56, 80+bobY);
+  ctx.lineTo(56 - legSwing, 93);
+  ctx.stroke();
+
+  // Shoes
+  ctx.fillStyle = '#E63946';
+  ctx.beginPath();
+  ctx.ellipse(38 + legSwing, 95, 7, 4, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#E63946';
+  ctx.beginPath();
+  ctx.ellipse(58 - legSwing, 95, 7, 4, -0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// === KACKESAURUS WIN DRAWING ===
+function drawKackesaurus() {
+  // Big animated poop with eyes in CSS – handled via emoji + overlay
+}
+
+// === GAME LOOP ===
+let lastTime = 0;
+function gameLoop(timestamp) {
+  if (!gameRunning) return;
+  const dt = (timestamp - lastTime) / 16.67;
+  lastTime = timestamp;
+
+  const W = window.innerWidth;
+  const groundH = window.innerHeight * 0.12;
+  const sidewalkH = 8;
+  const boyW = 100;
+
+  // Scooter up/down motion (ramp simulation)
+  scooterPhase += 0.035 * dt;
+  const rampOffset = Math.sin(scooterPhase) * 18; // px up/down
+
+  // Move boy
+  boyX += boyDir * boySpeed * dt;
+
+  // Bounce at edges
+  if (boyX > W - boyW) {
+    boyX = W - boyW;
+    boyDir = -1;
+  }
+  if (boyX < 0) {
+    boyX = 0;
+    boyDir = 1;
+  }
+
+  // Wheel rotation
+  wheelAngle += boyDir * 0.12 * dt;
+
+  // Leg phase
+  legPhase += 0.08 * dt;
+
+  // Position canvas
+  canvas.style.left = boyX + 'px';
+  canvas.style.bottom = (groundH + sidewalkH + rampOffset) + 'px';
+
+  // Handle fall animation
+  if (isFalling) {
+    fallTimer += dt;
+    if (fallTimer > 30) {
+      isFalling = false;
+      fallTimer = 0;
+      // Resume
+    }
+  }
+
+  // Draw
+  drawBoy(boyX, boyDir, legPhase, isFalling);
+
+  requestAnimationFrame(gameLoop);
+}
+
+// === THROW POOP ===
+gameContainer.addEventListener('click', (e) => {
+  if (!gameRunning) return;
+  if (e.target === document.getElementById('restartBtn')) return;
+
+  const poop = document.createElement('div');
+  poop.className = 'poop';
+  poop.textContent = '💩';
+
+  // Start from bottom-center of click or random position near cursor
+  const startX = e.clientX;
+  const startY = window.innerHeight - 50;
+  poop.style.left = startX + 'px';
+  poop.style.top = startY + 'px';
+
+  gameContainer.appendChild(poop);
+
+  // Cursor animation
+  cursorEl.classList.add('throwing');
+  setTimeout(() => cursorEl.classList.remove('throwing'), 300);
+
+  // Target: where you clicked
+  const targetX = e.clientX;
+  const targetY = e.clientY;
+
+  // Animate poop arc
+  let progress = 0;
+  const duration = 400; // ms
+  const startTime = performance.now();
+
+  function animatePoop(now) {
+    const elapsed = now - startTime;
+    progress = Math.min(elapsed / duration, 1);
+
+    // Arc trajectory
+    const t = progress;
+    const curX = startX + (targetX - startX) * t;
+    const arcH = -200; // arc height
+    const curY = startY + (targetY - startY) * t + arcH * Math.sin(Math.PI * t);
+
+    poop.style.left = curX + 'px';
+    poop.style.top = curY + 'px';
+    poop.style.transform = `rotate(${t * 360}deg) scale(${1 + 0.3 * Math.sin(Math.PI * t)})`;
+
+    if (progress < 1) {
+      requestAnimationFrame(animatePoop);
+    } else {
+      // Check hit
+      checkHit(targetX, targetY, poop);
+    }
+  }
+  requestAnimationFrame(animatePoop);
+});
+
+function checkHit(tx, ty, poopEl) {
+  const boyRect = canvas.getBoundingClientRect();
+  const margin = 20;
+
+  if (
+    tx >= boyRect.left - margin &&
+    tx <= boyRect.right + margin &&
+    ty >= boyRect.top - margin &&
+    ty <= boyRect.bottom + margin
+  ) {
+    // HIT!
+    hits++;
+    updateHUD();
+
+    // Splat effect
+    const splat = document.createElement('div');
+    splat.className = 'splat';
+    splat.textContent = '💥';
+    splat.style.left = (tx - 20) + 'px';
+    splat.style.top = (ty - 20) + 'px';
+    gameContainer.appendChild(splat);
+    setTimeout(() => splat.remove(), 800);
+
+    // Score pop
+    const pop = document.createElement('div');
+    pop.className = 'scorePop';
+    pop.textContent = hits === 3 ? '💀 TREFFER!' : `💩 TREFFER! (${hits}/3)`;
+    pop.style.left = (tx - 40) + 'px';
+    pop.style.top = (ty - 20) + 'px';
+    gameContainer.appendChild(pop);
+    setTimeout(() => pop.remove(), 1000);
+
+    // Boy falls
+    isFalling = true;
+    fallTimer = 0;
+
+    // Speed up after each hit
+    boySpeed = 2.5 + hits * 0.8;
+
+    if (hits >= 3) {
+      setTimeout(() => triggerWin(), 800);
+    }
+  } else {
+    // MISS
+    const miss = document.createElement('div');
+    miss.className = 'missPop';
+    miss.textContent = ['Daneben! 😅', 'Fast!', 'Nochmal!', 'Ups! 🙈'][Math.floor(Math.random()*4)];
+    miss.style.left = (tx - 30) + 'px';
+    miss.style.top = (ty - 10) + 'px';
+    gameContainer.appendChild(miss);
+    setTimeout(() => miss.remove(), 800);
+
+    // Splat on ground
+    const splat = document.createElement('div');
+    splat.className = 'splat';
+    splat.textContent = '💩';
+    splat.style.left = (tx - 15) + 'px';
+    splat.style.top = (window.innerHeight * 0.85) + 'px';
+    splat.style.fontSize = '20px';
+    gameContainer.appendChild(splat);
+    setTimeout(() => splat.remove(), 1500);
+  }
+
+  poopEl.remove();
+}
+
+function updateHUD() {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById(`dot${i}`);
+    if (i <= hits) {
+      dot.classList.add('filled');
+      dot.textContent = '💩';
+    }
+  }
+}
+
+// === WIN ===
+function triggerWin() {
+  gameRunning = false;
+  winScreen.classList.add('show');
+  spawnConfetti();
+}
+
+function spawnConfetti() {
+  const colors = ['#FFD700', '#FF4400', '#00CC66', '#FF69B4', '#00BFFF', '#8B4513', '#FF8C00'];
+  for (let i = 0; i < 80; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.top = '-20px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.width = (8 + Math.random() * 12) + 'px';
+    c.style.height = (8 + Math.random() * 12) + 'px';
+    c.style.animationDuration = (2 + Math.random() * 3) + 's';
+    c.style.animationDelay = (Math.random() * 2) + 's';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    winScreen.appendChild(c);
+    setTimeout(() => c.remove(), 6000);
+  }
+}
+
+function restartGame() {
+  hits = 0;
+  gameRunning = true;
+  isFalling = false;
+  fallTimer = 0;
+  boySpeed = 2.5;
+  boyX = 0;
+  boyDir = 1;
+  scooterPhase = 0;
+  legPhase = 0;
+
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById(`dot${i}`);
+    dot.classList.remove('filled');
+    dot.textContent = '';
+  }
+
+  winScreen.classList.remove('show');
+  winScreen.querySelectorAll('.confetti').forEach(c => c.remove());
+
+  gameRunning = true;
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+// === START ===
+lastTime = performance.now();
+requestAnimationFrame(gameLoop);
+
+// Resize fence on window resize
+window.addEventListener('resize', () => {
+  (function buildFence() {
+    const fence = document.getElementById('fence');
+    fence.innerHTML = '';
+    const w = window.innerWidth;
+    const count = Math.floor(w / 22);
+    const rail1 = document.createElement('div');
+    rail1.className = 'fenceRail';
+    rail1.style.top = '10px';
+    const rail2 = document.createElement('div');
+    rail2.className = 'fenceRail';
+    rail2.style.top = '38px';
+    fence.appendChild(rail1);
+    fence.appendChild(rail2);
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'fencePost';
+      p.style.width = '12px';
+      p.style.height = '55px';
+      p.style.background = '#8B5E3C';
+      p.style.borderRadius = '3px 3px 0 0';
+      p.style.position = 'relative';
+      p.style.flexShrink = '0';
+      fence.appendChild(p);
+    }
+  })();
+});
+</script>
+</body>
+</html>
